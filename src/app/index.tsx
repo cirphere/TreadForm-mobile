@@ -2,22 +2,19 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
 import { useApp } from '@/context/AppContext';
 import { ModeToggle } from '@/components/mode-toggle';
 import { colors } from '@/constants/colors';
+import { pickVideoFromGallery } from '@/utils/pickVideo';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { mode, setMode, members, selectMember, setVideoUri } = useApp();
 
   const pickFromGallery = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['videos'],
-      quality: 1,
-    });
-    if (!result.canceled && result.assets[0]) {
-      setVideoUri(result.assets[0].uri);
+    const uri = await pickVideoFromGallery();
+    if (uri) {
+      setVideoUri(uri);
       router.push('/analyzing');
     }
   };
