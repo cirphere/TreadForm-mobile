@@ -9,7 +9,8 @@ function getDefaultUrl(): string {
     const ip = debuggerHost.split(':')[0];
     return `http://${ip}:8000`;
   }
-  return Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+  if (Platform.OS === 'web') return 'http://localhost:8000';
+  return 'http://192.168.55.148:8000';
 }
 
 let _baseUrl = getDefaultUrl();
