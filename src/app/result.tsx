@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { useRouter } from 'expo-router';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { colors } from '@/constants/colors';
 import { useApp } from '@/context/AppContext';
-import { videoUrl } from '@/services/api';
+import { videoUrl, csvUrl } from '@/services/api';
 import { MetricTile } from '@/components/metric-tile';
 import { CoachingCard } from '@/components/coaching-card';
 import { DangerTimeline } from '@/components/danger-timeline';
@@ -15,6 +17,7 @@ export default function ResultScreen() {
   const router = useRouter();
   const { currentAnalysis, mode } = useApp();
   const [tab, setTab] = useState<Tab>('overview');
+  const [downloading, setDownloading] = useState(false);
 
   if (!currentAnalysis) {
     router.replace('/');
@@ -22,6 +25,34 @@ export default function ResultScreen() {
   }
 
   const a = currentAnalysis;
+
+  const handleDownloadCsv = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const url = csvUrl(a.analysis_id);
+
+      if (Platform.OS === 'web') {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `report_${a.analysis_id}.csv`;
+        link.click();
+      } else {
+        const dest = new File(Paths.cache, `report_${a.analysis_id}.csv`);
+        const downloaded = await File.downloadFileAsync(url, dest);
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(downloaded.uri, { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text' });
+        } else {
+          Alert.alert('완료', `파일이 저장되었습니다:\n${downloaded.uri}`);
+        }
+      }
+    } catch (e: any) {
+      Alert.alert('다운로드 실패', e.message || '네트워크 오류가 발생했습니다.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const player = useVideoPlayer(videoUrl(a.analysis_id), p => {
     p.loop = true;
   });
@@ -169,8 +200,8 @@ export default function ResultScreen() {
               <Text style={s.coachText}>{a.coach_message}</Text>
             </View>
 
-            <TouchableOpacity style={s.downloadBtn} activeOpacity={0.7}>
-              <Text style={s.downloadText}>CSV 리포트 다운로드</Text>
+            <TouchableOpacity style={[s.downloadBtn, downloading && s.downloadBtnDisabled]} activeOpacity={0.7} onPress={handleDownloadCsv} disabled={downloading}>
+              <Text style={s.downloadText}>{downloading ? '다운로드 중...' : 'CSV 리포트 다운로드'}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -243,5 +274,6 @@ const s = StyleSheet.create({
     height: 48, borderRadius: 12, backgroundColor: colors.labelStrong,
     justifyContent: 'center', alignItems: 'center',
   },
+  downloadBtnDisabled: { opacity: 0.5 },
   downloadText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });
