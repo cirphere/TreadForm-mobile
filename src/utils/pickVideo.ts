@@ -15,8 +15,8 @@ export async function pickVideoFromGallery(): Promise<string | null> {
 
   if (Platform.OS !== 'web') {
     try {
-      const { getVideoInfoAsync } = await import('expo-video-metadata');
-      const info = await getVideoInfoAsync(uri);
+      const ExpoVideoMetadata = require('expo-video-metadata');
+      const info = await ExpoVideoMetadata.getVideoInfoAsync(uri);
 
       if (info.fps < MIN_FPS) {
         Alert.alert(
@@ -26,7 +26,7 @@ export async function pickVideoFromGallery(): Promise<string | null> {
         return null;
       }
     } catch {
-      // 메타데이터 읽기 실패 시 서버에서 검증
+      // 네이티브 모듈 없으면 (Expo Go) 서버에서 검증
     }
   }
 
