@@ -40,10 +40,7 @@ const s = StyleSheet.create({
   },
   tabActive: {
     backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.08,
-    shadowRadius: 3,
+    boxShadow: '0px 1px 3px rgba(0, 0, 0, 0.08)',
     elevation: 2,
   },
   tabText: {
